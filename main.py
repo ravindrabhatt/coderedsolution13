@@ -119,6 +119,7 @@ class Codered(Handler):
           self.render('start.html')
       
       def post(self):
+          choice = self.request.get('ch')# choice will contain the option selected (one OR two OR three OR FOUR--REFER start.html)
           self.redirect('/codered') 
 
 app = webapp2.WSGIApplication([

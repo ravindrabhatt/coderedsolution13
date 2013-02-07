@@ -42,6 +42,7 @@
 				<p> 
 					<input name = 'ch' type = 'radio' value = 'four'>
 				</p>
+				<p>{{choice}}</p>
 				<p>
 					<input class = 'submit' type = 'submit'>
 				</p>
