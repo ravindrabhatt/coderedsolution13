@@ -120,9 +120,8 @@ class Instruction(Handler):
           self.render('instruction.html')
       
       def post(self):
-          global questionNo,questionSet
+          global questionNo
           questionNo = 1
-          questionSet = self.getQuestion()
           self.redirect('/codered')    
 
 kflag = False

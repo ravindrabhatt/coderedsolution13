@@ -182,7 +182,7 @@ class Codered(Handler):
                         questionSet = db.GqlQuery("SELECT * FROM Question")
                         cflag = True
                   else:
-                       pass       
+                       self.write('cache')      
                   classMap['question'] = questionSet[int(questionNo)-1].question
                   classMap['choice1'] =  questionSet[int(questionNo)-1].choice_1
                   classMap['choice2'] =  questionSet[int(questionNo)-1].choice_2
