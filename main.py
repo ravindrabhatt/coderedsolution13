@@ -25,14 +25,13 @@ def users_key(group = 'default'):
       return db.Key.from_path('users', group)
 
 questionNo = 1
+cflag = False
+questionSet = []
 
+classMap = dict(qno = questionNo,class29= 'q', class28= 'q', class21= 'q', class20= 'q', class23= 'q', class22= 'q', class25= 'q', class24= 'q', class27= 'q', class26= 'q', class8= 'q', class9= 'q', class6= 'q', class7= 'q', class4= 'q', class5= 'q', class2= 'q', class3= 'q', class1= 'current', class30= 'q', class18= 'q', class19= 'q', class14= 'q', class15= 'q', class16= 'q', class17= 'q', class10= 'q', class11= 'q', class12= 'q', class13= 'q')
 
-classMap = dict(qno = questionNo,class29= 'q', class28= 'q', class21= 'q', class20= 'q', class23= 'q', class22= 'q', class25= 'q', class24= 'q', class27= 'q', class26= 'q', class8= 'q', class9= 'q', class6= 'q', class7= 'q', class4= 'q', class5= 'q', class2= 'q', class3= 'q', class1= 'q', class30= 'q', class18= 'q', class19= 'q', class14= 'q', class15= 'q', class16= 'q', class17= 'q', class10= 'q', class11= 'q', class12= 'q', class13= 'q')
-
- 
           
 class Handler(webapp2.RequestHandler):
-      questionSet = []
       def write(self, *a, **kw):
           self.response.out.write(*a, **kw)
         
@@ -43,10 +42,7 @@ class Handler(webapp2.RequestHandler):
       def render(self, template, **kw):
           self.write(self.render_str(template, **kw))
 
-      def getQuestion(self):
-          questionSet = db.GqlQuery("SELECT * FROM Question LIMIT 30")
-          questionSet = list(questionSet)  
-
+          
 class MainHandler(Handler):
     def get(self):
           self.render('base.html')
@@ -124,25 +120,26 @@ class Instruction(Handler):
           self.render('instruction.html')
       
       def post(self):
-          global questionNo
+          global questionNo,questionSet
           questionNo = 1
+          questionSet = self.getQuestion()
           self.redirect('/codered')    
 
 kflag = False
 
 class Codered(Handler):              
       def get(self):
-          k = db.GqlQuery("SELECT * FROM Question LIMIT 1")
-          for qs in k:
-                  classMap['question'] = qs.question
-                  classMap['choice1'] =  qs.choice_1
-                  classMap['choice2'] =  qs.choice_2
-                  classMap['choice3'] =  qs.choice_3
-                  classMap['choice4'] =  qs.choice_4                     
+          global questionNo
+          questionSet = db.GqlQuery("SELECT * FROM Question LIMIT 1") 
+          classMap['question'] = questionSet[0].question
+          classMap['choice1'] =  questionSet[0].choice_1
+          classMap['choice2'] =  questionSet[0].choice_2
+          classMap['choice3'] =  questionSet[0].choice_3
+          classMap['choice4'] =  questionSet[0].choice_4                     
           self.render('start.html', **classMap)
       
       def post(self):
-          global questionNo,kflag 
+          global questionNo,kflag ,cflag,questionSet         
           choice = self.request.get('ch')# choice will contain the choice selected (one OR two OR three OR FOUR--REFER start.html)
           qNo = self.request.get('questionNo')
           if qNo != questionNo:
@@ -173,21 +170,26 @@ class Codered(Handler):
                                    temp = 1
                               if temp == int(questionNo):
                                    break
-                          questionNo = str(temp) 
+                          # 
                           if temp == int(questionNo):
                                     kflag = True 
-                                    classMap['class'+str(questionNo)] ='submitted'             
+                                    classMap['class'+str(temp)] ='submitted'             
                           else:          
-                                    classMap['class'+str(questionNo)] ='current'     
+                                    classMap['class'+str(temp)] ='current'   
+                          questionNo = str(temp)            
                           classMap['qno'] = questionNo 
-                  k = db.GqlQuery("SELECT * FROM Question LIMIT 1")
-                  for qs in k:
-                          classMap['question'] = qs.question
-                          classMap['choice1'] =  qs.choice_1
-                          classMap['choice2'] =  qs.choice_2
-                          classMap['choice3'] =  qs.choice_3
-                          classMap['choice4'] =  qs.choice_4         
-                                   
+                  if  cflag == False :   
+                        global questionSet     
+                        questionSet = db.GqlQuery("SELECT * FROM Question")
+                        cflag = True
+                  else:
+                       pass       
+                  classMap['question'] = questionSet[int(questionNo)-1].question
+                  classMap['choice1'] =  questionSet[int(questionNo)-1].choice_1
+                  classMap['choice2'] =  questionSet[int(questionNo)-1].choice_2
+                  classMap['choice3'] =  questionSet[int(questionNo)-1].choice_3
+                  classMap['choice4'] =  questionSet[int(questionNo)-1].choice_4         
+                                       
                                                                 
           self.render('start.html', **classMap)
 
