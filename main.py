@@ -142,6 +142,7 @@ class Codered(Handler):
           choice = self.request.get('ch')# choice will contain the choice selected (one OR two OR three OR FOUR--REFER start.html)
           qNo = self.request.get('questionNo')
           if qNo != questionNo:
+                  #if user goes to a different question
                   if qNo :
                       if kflag == False:
                              classMap['class'+str(questionNo)] ='q'
@@ -156,7 +157,9 @@ class Codered(Handler):
                       
                       classMap['class'+str(qNo)] ='current'    
                       questionNo = qNo 
-                      classMap['qno'] = questionNo         
+                      classMap['qno'] = questionNo       
+                      
+                    #if user presses submit button    
                   if not qNo:
                       submit = self.request.get('submit')   
                       if submit and choice:
@@ -182,7 +185,7 @@ class Codered(Handler):
                         questionSet = db.GqlQuery("SELECT * FROM Question")
                         cflag = True
                   else:
-                       self.write('cache')      
+                        self.write('cache')   #debug   
                   classMap['question'] = questionSet[int(questionNo)-1].question
                   classMap['choice1'] =  questionSet[int(questionNo)-1].choice_1
                   classMap['choice2'] =  questionSet[int(questionNo)-1].choice_2
