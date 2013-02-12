@@ -1,0 +1,48 @@
+class Handler():
+      questionNo = 1
+      questionSet = []
+
+      classMap = dict(qno = questionNo,class29= 'q', class28= 'q', class21= 'q', class20= 'q', class23= 'q', class22= 'q', class25= 'q', class24= 'q', class27= 'q', class26= 'q', class8= 'q', class9= 'q', class6= 'q', class7= 'q', class4= 'q', class5= 'q', class2= 'q', class3= 'q', class1= 'current', class30= 'q', class18= 'q', class19= 'q', class14= 'q', class15= 'q', class16= 'q', class17= 'q', class10= 'q', class11= 'q', class12= 'q', class13= 'q')
+     
+         
+      def getQuestion(self, cacheFlag = False):         
+          self.classMap['question'] = self.questionSet[int(self.questionNo)-1].question
+          self.classMap['choice1'] =  self.questionSet[int(self.questionNo)-1].choice_1
+          self.classMap['choice2'] =  self.questionSet[int(self.questionNo)-1].choice_2
+          self.classMap['choice3'] =  self.questionSet[int(self.questionNo)-1].choice_3
+          self.classMap['choice4'] =  self.questionSet[int(self.questionNo)-1].choice_4      
+          
+          
+kflag = False
+
+class Codered(Handler):              
+      def get(self):
+          self.getQuestion()
+      
+      def post(self):   
+          global kflag    
+          qNo = 1
+          if 1 == 1:
+                  #if user goes to a different question
+                  if qNo :
+                      if kflag == False:
+                             self.classMap['class'+str(self.questionNo)] ='q'
+                      else:
+                             self.classMap['class'+str(self.questionNo)] ='submitted'   
+                      if self.classMap['class'+str(qNo)] == 'submitted' :
+                             kflag = True  
+                      else:
+                             kflag = False       
+                      
+                      
+                      
+                      self.classMap['class'+str(qNo)] ='current'    
+                      self.questionNo = qNo 
+                      self.classMap['qno'] = self.questionNo       
+                      
+                    #if user presses submit button    
+                 
+                  self.getQuestion(True)       
+          print self.questionNo
+          print qNo
+                                                
