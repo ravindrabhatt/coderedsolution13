@@ -28,9 +28,10 @@ SECRET = 'rkuhoi$kjb&JKn%,kn&*@#'
 
 questionNo = 1
 questionSet = {}
-
-classMap = dict(timer1= '01',timer2 = '04', qno = questionNo, class29= 'q', class28= 'q', class21= 'q', class20= 'q', class23= 'q', class22= 'q', class25= 'q', class24= 'q', class27= 'q', class26= 'q', class8= 'q', class9= 'q', class6= 'q', class7= 'q', class4= 'q', class5= 'q', class2= 'q', class3= 'q', class1= 'current', class30= 'q', class18= 'q', class19= 'q', class14= 'q', class15= 'q', class16= 'q', class17= 'q', class10= 'q', class11= 'q', class12= 'q', class13= 'q')
-
+solution = dict(solved = [], correct = 0, wrong = 0, totalAttempted = 0, score = 0)
+classMap = dict(timer1= '00',timer2 = '31', qno = questionNo, class29= 'q', class28= 'q', class21= 'q', class20= 'q', class23= 'q', class22= 'q', class25= 'q', class24= 'q', class27= 'q', class26= 'q', class8= 'q', class9= 'q', class6= 'q', class7= 'q', class4= 'q', class5= 'q', class2= 'q', class3= 'q', class1= 'current', class30= 'q', class18= 'q', class19= 'q', class14= 'q', class15= 'q', class16= 'q', class17= 'q', class10= 'q', class11= 'q', class12= 'q', class13= 'q')
+adminname = ''
+pword = ''
  
 def check_secure_val(h):
       val= h.strip().split('|')[0]
@@ -63,7 +64,7 @@ class Handler(webapp2.RequestHandler):
           return cookie_val and check_secure_val(cookie_val)
           
       def login(self, team):
-          self.set_secure_cookie('team_id', str(team.key().id()))
+          self.set_secure_cookie('team_id', str(team.teamname))
       
       def logout(self):
           self.response.headers.add_header('Set-Cookie','team_id=; Path=/')
@@ -71,10 +72,10 @@ class Handler(webapp2.RequestHandler):
       def initialize(self, *a, **kw):
           webapp2.RequestHandler.initialize(self, *a, **kw)
           teamid = self.read_secure_cookie('team_id')
-          self.team = teamid and Register.by_id(int(teamid))  
+          self.team = teamid and Register.by_name(teamid)  
          
       def getQuestion(self, cacheFlag = False):
-          global questionNo, questionSet, classMap
+          global questionNo, questionSet, solution, classMap
           if cacheFlag == False:
                 query = Question.all()
                 qdir = {}#for storing all questions
@@ -82,7 +83,7 @@ class Handler(webapp2.RequestHandler):
                 for ques in query:
                     key = key + 1
                     qdir[key] = [ques.question,ques.choice_1,ques.choice_2,ques.choice_3,ques.choice_4,ques.answer]#qdir = {key : list}
-                
+                    
                 a = random.randint(1,key-3)
                 newkey = 0
                 for x in xrange(a,a+4):
@@ -95,10 +96,30 @@ class Handler(webapp2.RequestHandler):
           classMap['choice2'] =  questionSet[int(questionNo)][2]
           classMap['choice3'] =  questionSet[int(questionNo)][3]
           classMap['choice4'] =  questionSet[int(questionNo)][4]      
-                 
+      
+      def reset(self):
+          global questionNo, classMap, solution
+          questionNo = 1
+          for x in range(1, 31):
+              classMap['class' + str(x)] = 'q'
+              solution[x] = None
+          solution['correct'] = 0
+          solution['wrong'] = 0
+          solution['totalAttempted'] = 0
+          solution['score'] = 0   
+          classMap['timer1'] = '00'
+          classMap['timer2'] = '31'
+          classMap['class1'] = 'current' 
+          classMap['qno'] = 1
+          del solution['solved']
+          solution['solved'] = []
+
 class MainHandler(Handler):
     def get(self):
-          self.render('base.html')
+        if (str(self.request.remote_addr) in ['127.0.0.1','203.199.146.114']): # add the list of allowed ip's
+            self.render('base.html')
+        else:
+            self.render('403.html') #Access denied. maybe use a HTML PAGE
           
     def post(self):           
           teamname = self.request.get('teamname')
@@ -107,6 +128,7 @@ class MainHandler(Handler):
           
           if u:
               self.login(u)
+              self.reset()
               self.redirect('/instructions')
           else:
               msg = 'Invalid login'
@@ -142,7 +164,11 @@ class RegisterHandler(Handler):
     def make_pass(self):
         return ''.join(random.choice(string.letters) for x in xrange(5))
     def get(self):
-        self.render('reg.html')
+        if adminname and pword:
+            self.render('reg.html')
+        else:
+            self.render('403.html')
+
     def post(self):
         team = self.request.get('team')
         mail = self.request.get('email')
@@ -159,11 +185,19 @@ class Question(db.Model):
     choice_4 = db.TextProperty(required = True)
     answer = db.TextProperty(required = True)
     
-    
-    
+class Scorecard(db.Model):
+    teamname = db.TextProperty(required = True)    
+    attempted = db.TextProperty(required = True)
+    correct = db.TextProperty(required = True)
+    score = db.TextProperty(required = True)
+
 class QuesHandler(Handler):
     def get(self):
-        self.render('ques.html')
+        if adminname and pword:
+            self.render('ques.html')
+        else:
+            self.render('403.html')
+
     def post(self):
         ques = self.request.get('ques')
         ch1 = self.request.get('ch1')
@@ -175,8 +209,6 @@ class QuesHandler(Handler):
         Q.put()
         self.redirect('/admin/question')
 
-
-
 class Instruction(Handler):
       def get(self):
           check = self.read_secure_cookie('team_id')
@@ -187,41 +219,50 @@ class Instruction(Handler):
           
           
       def post(self):
-          global questionNo
-          questionNo = 1
           self.redirect('/codered')    
 
-kflag = False
+quesAlreadySubmitted = False
+def setScore(choice):
+      global questionNo, solution
+      if int(questionNo) not in solution['solved']:
+          solution['solved'].append(int(questionNo))
+          if int(questionSet[int(questionNo)][5]) == int(choice):
+                 solution['correct'] += 1
+          else:
+                 solution['wrong'] += 1
+          solution['totalAttempted'] += 1              
+
 
 class Codered(Handler):              
       def get(self):
           check = self.read_secure_cookie('team_id')
           if check:
-              global questionNo
-              self.getQuestion()                   
+              self.getQuestion()          
               self.render('start.html', **classMap)
           else:
              self.redirect('/') 
           
       def post(self):
-          global questionNo, kflag , questionSet, classMap 
+          global questionNo, quesAlreadySubmitted , questionSet, classMap, solution 
           classMap['timer1'] = self.request.get('timer1')  
           classMap['timer2'] = self.request.get('timer2')  
-      
+          completed = self.request.get('viewscore')
+          if completed:
+              self.redirect('/score')
           choice = self.request.get('ch')# choice will contain the choice selected (one OR two OR three OR FOUR--REFER start.html)
           qNo = self.request.get('questionNo')
           if qNo != questionNo:
                   #if user goes to a different question
-                  #kflag is used to check if the current question is alredy submitted
+                  #quesAlreadySubmitted is used to check if the current question is alredy submitted
                   if qNo :
-                      if kflag == False:
+                      if quesAlreadySubmitted == False:
                              classMap['class'+str(questionNo)] ='q'
                       else:
                              classMap['class'+str(questionNo)] ='submitted'   
                       if classMap['class'+str(qNo)] == 'submitted' :
-                             kflag = True  
+                             quesAlreadySubmitted = True  
                       else:
-                             kflag = False       
+                             quesAlreadySubmitted = False       
                       
                       classMap['class'+str(qNo)] ='current'    
                       questionNo = qNo 
@@ -231,6 +272,7 @@ class Codered(Handler):
                   if not qNo:
                       submit = self.request.get('submit')   
                       if submit and choice:
+                          setScore(choice)
                           classMap['class'+str(questionNo)] ='submitted'
                           temp = int(questionNo)
                           
@@ -242,19 +284,54 @@ class Codered(Handler):
                                    break
                           # 
                           if temp == int(questionNo):
-                                    kflag = True 
+                                    quesAlreadySubmitted = True 
                                     classMap['class'+str(temp)] ='submitted'             
                           else:          
                                     classMap['class'+str(temp)] ='current'   
                           questionNo = temp           
                           classMap['qno'] = questionNo 
-                  self.getQuestion(True)                                                        
+                  self.getQuestion(True)                                                                      
           self.render('start.html', **classMap)
+
+class Score(MainHandler):
+      def get(self):
+          check = self.read_secure_cookie('team_id')
+          if check:
+              score = {}
+              score['name'] = check
+              score['correct'] = solution['correct']
+              score['wrong'] = solution['wrong']
+              score['attempted'] = solution['totalAttempted'] 
+              score['score'] = (int(solution['correct']) * 3) - int(solution['wrong']) 
+              scoreRecord = Scorecard(teamname = check, attempted = str(solution['totalAttempted']), correct = str(solution['correct']), score = str(score['score']))
+              scoreRecord.put() 
+              self.render('score.html', **score) 
+          else:
+              self.redirect('/')   
+      
+      def post(self):
+          self.logout()
+          self.redirect('/') 
 
 class Logout(MainHandler):
       def get(self):
           self.logout()
           self.redirect('/') 
+
+class AdminHandler(Handler):
+    def get(self):
+        self.render('admin.html')
+    def post(self):
+        global adminname , pword
+        adminname = self.request.get('username')
+        pword = self.request.get('password')
+        if adminname == 'harry' and pword == 'ron':
+            self.redirect('/') 
+        else:
+            adminname = ''
+            pword = ''
+            msg = 'Invalid login'
+            self.render('admin.html', error = msg)
 
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
@@ -262,5 +339,7 @@ app = webapp2.WSGIApplication([
     ('/admin/question', QuesHandler),
     ('/instructions', Instruction),
     ('/codered', Codered),
+    ('/score', Score),
     ('/logout', Logout),
+    ('/admin', AdminHandler)
 ], debug=True)
