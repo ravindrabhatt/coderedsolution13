@@ -18,7 +18,7 @@ def teams_key(group = 'default'):
 SECRET = 'rkuhoi$kjb&JKn%,kn&*@#'
 
 top_scores = {}# store top scores
-loggedUsers = []
+loggedUsers = [] # list of logged users
 users = {}#for  storing user data
 qdir = {}#for storing all questions
 tot_ques = 0 # for total number of questions in database
@@ -211,11 +211,23 @@ def make_salt(length = 5):
 
 #admin handler for registering users    
 class RegisterHandler(Handler):
-    def make_pass(self):
-        return ''.join(random.choice(string.letters) for x in xrange(5))
+    def read_pasw(self):
+        f = open('printopen.txt','rb')
+        logins = f.read()
+        log = logins.split('\n')
+        for l in log :
+             temp = l.split('      ')
+             team = temp[0]
+             pasw = temp[1]
+             mail = '1@test.com' 
+             Regstr = Register(teamname = team,password = pasw,email = mail)
+             Regstr.put()#write to database
+
     def get(self):
+        global adminname, pword
         #if user is admin
         if adminname and pword:
+            self.read_pasw()
             self.render('reg.html')
         #if user is not admin    
         else:
@@ -284,7 +296,7 @@ class QuesHandler(Handler):
 #read questions from database
 class ReadQuestion(Handler):
     def get(self):
-        global qdir, tot_ques
+        global qdir, tot_ques, adminname, pword
         if adminname and pword:
             query = Question.all()
             key = 0#for key in qdir
@@ -483,6 +495,12 @@ class TopScore(Handler):
         l = self.sortdic(top_scores)
         #self.response.out.write(top_scores)
         self.render('topscore.html',topscore=l)
+     
+class test(Handler):
+        def get(self):
+            global users, loggedUsers           
+            self.response.out.write(users)
+            self.response.out.write(loggedUsers)
 
 #declaration of handlers
 app = webapp2.WSGIApplication([
@@ -495,5 +513,6 @@ app = webapp2.WSGIApplication([
     ('/score', Score),
     ('/logout', Logout),
     ('/admin', AdminHandler),
-    ('/admin/topscore',TopScore)
+    ('/admin/topscore', TopScore),
+    ('/debug', test),
 ], debug=True)
