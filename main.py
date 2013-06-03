@@ -48,6 +48,7 @@ def make_secure_val(s):
       return "%s|%s" % (s,hash_str(s))  
           
 
+
 class user_data():
     '''
     Base Handler for the application
